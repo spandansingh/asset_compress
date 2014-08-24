@@ -20,7 +20,7 @@ class AssetCompressHelper extends AppHelper {
  *
  * @var array
  */
-	public $helpers = array('Html');
+	 public $helpers = array('Html','compressHtml');
 
 /**
  * Configuration object
@@ -264,6 +264,7 @@ class AssetCompressHelper extends AppHelper {
 		if (substr($file, strlen($ext) * -1) !== $ext) {
 			$file .= $ext;
 		}
+		
 		return $file;
 	}
 
@@ -283,10 +284,23 @@ class AssetCompressHelper extends AppHelper {
  * @throws RuntimeException
  * @return A stylesheet tag
  */
-	public function css($file, $options = array()) {
-		$file = $this->_addExt($file, '.css');
+	public function css($file,  $target=':h-default.css') {
+		$options=array();
+		$file=(array)$file;
+		$this->addCss($file,$target);
+		
+		if((strpos($target, ':h') === 0)){
+			$file=md5(implode('_',$file));
+		}
+		
+		if(Configure::read('debug')>1){
+			$options['raw']=true;
+		}
+		
+		$file = $this->_addExt($file, '.css');		
 		$config = $this->config();
 		$buildFiles = $config->files($file);
+		
 		if (!$buildFiles) {
 			throw new RuntimeException('Cannot create a stylesheet tag for a build that does not exist.');
 		}
@@ -295,16 +309,17 @@ class AssetCompressHelper extends AppHelper {
 			unset($options['raw']);
 			$scanner = new AssetScanner($config->paths('css', $file), $this->theme);
 			foreach ($buildFiles as $part) {
-				$part = $scanner->find($part, false);
+				$part = $scanner->resolve($part, false);
 				$part = str_replace(DS, '/', $part);
 				$output .= $this->Html->css($part, null, $options);
 			}
+	
 			return $output;
 		}
-
+		
 		$url = $this->url($file, $options);
 		unset($options['full']);
-		return $this->Html->css($url, null, $options);
+		return $this->compressHtml->css($url);
 	}
 
 /**
@@ -323,10 +338,23 @@ class AssetCompressHelper extends AppHelper {
  * @throws RuntimeException
  * @return A script tag
  */
-	public function script($file, $options = array()) {
+	public function script($file,  $target=':h-default.js') {
+		$options=array();
+		$file=(array)$file;
+		$this->addScript($file,$target);
+		
+		if((strpos($target, ':h') === 0)){
+			$file=md5(implode('_',$file));
+		}
+		
+		if(Configure::read('debug')>1){
+			$options['raw']=true;
+		}
+		
 		$file = $this->_addExt($file, '.js');
 		$config = $this->config();
 		$buildFiles = $config->files($file);
+		
 		if (!$buildFiles) {
 			throw new RuntimeException('Cannot create a script tag for a build that does not exist.');
 		}
@@ -335,7 +363,7 @@ class AssetCompressHelper extends AppHelper {
 			unset($options['raw']);
 			$scanner = new AssetScanner($config->paths('js', $file), $this->theme);
 			foreach ($buildFiles as $part) {
-				$part = $scanner->find($part, false);
+				$part = $scanner->resolve($part, false);
 				$part = str_replace(DS, '/', $part);
 				$output .= $this->Html->script($part, $options);
 			}
@@ -345,7 +373,7 @@ class AssetCompressHelper extends AppHelper {
 		$url = $this->url($file, $options);
 		unset($options['full']);
 
-		return $this->Html->script($url, $options);
+		return $this->compressHtml->script($url);
 	}
 
 /**
@@ -464,7 +492,7 @@ class AssetCompressHelper extends AppHelper {
  * @return mixed Either false or the string name of the hash.
  */
 	protected function _getHashName($build, $ext) {
-		if (strpos($build, ':hash') === 0) {
+		if (strpos($build, ':h') === 0) {
 			$buildFiles = $this->config()->files($build);
 			return md5(implode('_', $buildFiles)) . '.' . $ext;
 		}
@@ -479,7 +507,12 @@ class AssetCompressHelper extends AppHelper {
  * @param string $target The name of the build target, defaults to a hash of the filenames
  * @return void
  */
-	public function addScript($files, $target = ':hash-default.js') {
+	public function addScript($files, $target = ':h-default.js') {
+		
+		if(strpos($target, ':h') === 0){
+			$target=md5(implode('_',(array)$files));	
+		}
+		
 		$target = $this->_addExt($target, '.js');
 		$this->_runtime['js'][$target] = true;
 		$config = $this->config();
@@ -495,7 +528,12 @@ class AssetCompressHelper extends AppHelper {
  * @param string $target The name of the build target, defaults to a hash of the filenames
  * @return void
  */
-	public function addCss($files, $target = ':hash-default.css') {
+	public function addCss($files, $target = ':h-default.css') {
+		
+		if(strpos($target, ':h') === 0){
+			$target=md5(implode('_',(array)$files));	
+		}
+		
 		$target = $this->_addExt($target, '.css');
 		$this->_runtime['css'][$target] = true;
 		$config = $this->config();
