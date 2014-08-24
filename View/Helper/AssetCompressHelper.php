@@ -20,7 +20,7 @@ class AssetCompressHelper extends AppHelper {
  *
  * @var array
  */
-	 public $helpers = array('Html','compressHtml');
+	 public $helpers = array('Html');
 
 /**
  * Configuration object
@@ -319,7 +319,7 @@ class AssetCompressHelper extends AppHelper {
 		
 		$url = $this->url($file, $options);
 		unset($options['full']);
-		return $this->compressHtml->css($url);
+		return $this->Html->css($url);
 	}
 
 /**
@@ -373,7 +373,7 @@ class AssetCompressHelper extends AppHelper {
 		$url = $this->url($file, $options);
 		unset($options['full']);
 
-		return $this->compressHtml->script($url);
+		return $this->Html->script($url);
 	}
 
 /**
