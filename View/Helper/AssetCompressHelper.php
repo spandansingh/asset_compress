@@ -297,10 +297,9 @@ class AssetCompressHelper extends AppHelper {
 			$options['raw']=true;
 		}
 		
-		$file = $this->_addExt($file, '.css');		
+		$file = $this->_addExt($file, '.css');
 		$config = $this->config();
 		$buildFiles = $config->files($file);
-		
 		if (!$buildFiles) {
 			throw new RuntimeException('Cannot create a stylesheet tag for a build that does not exist.');
 		}
@@ -309,17 +308,16 @@ class AssetCompressHelper extends AppHelper {
 			unset($options['raw']);
 			$scanner = new AssetScanner($config->paths('css', $file), $this->theme);
 			foreach ($buildFiles as $part) {
-				$part = $scanner->resolve($part, false);
+				$part = $scanner->find($part, false);
 				$part = str_replace(DS, '/', $part);
 				$output .= $this->Html->css($part, null, $options);
 			}
-	
 			return $output;
 		}
-		
+
 		$url = $this->url($file, $options);
 		unset($options['full']);
-		return $this->Html->css($url);
+		return $this->Html->css($url, null, $options);
 	}
 
 /**
@@ -339,7 +337,6 @@ class AssetCompressHelper extends AppHelper {
  * @return A script tag
  */
 	public function script($file,  $target=':h-default.js') {
-		$options=array();
 		$file=(array)$file;
 		$this->addScript($file,$target);
 		
@@ -350,11 +347,10 @@ class AssetCompressHelper extends AppHelper {
 		if(Configure::read('debug')>1){
 			$options['raw']=true;
 		}
-		
+
 		$file = $this->_addExt($file, '.js');
 		$config = $this->config();
 		$buildFiles = $config->files($file);
-		
 		if (!$buildFiles) {
 			throw new RuntimeException('Cannot create a script tag for a build that does not exist.');
 		}
@@ -363,7 +359,7 @@ class AssetCompressHelper extends AppHelper {
 			unset($options['raw']);
 			$scanner = new AssetScanner($config->paths('js', $file), $this->theme);
 			foreach ($buildFiles as $part) {
-				$part = $scanner->resolve($part, false);
+				$part = $scanner->find($part, false);
 				$part = str_replace(DS, '/', $part);
 				$output .= $this->Html->script($part, $options);
 			}
@@ -373,7 +369,7 @@ class AssetCompressHelper extends AppHelper {
 		$url = $this->url($file, $options);
 		unset($options['full']);
 
-		return $this->Html->script($url);
+		return $this->Html->script($url, $options);
 	}
 
 /**
@@ -492,7 +488,7 @@ class AssetCompressHelper extends AppHelper {
  * @return mixed Either false or the string name of the hash.
  */
 	protected function _getHashName($build, $ext) {
-		if (strpos($build, ':h') === 0) {
+		if (strpos($build, ':hash') === 0) {
 			$buildFiles = $this->config()->files($build);
 			return md5(implode('_', $buildFiles)) . '.' . $ext;
 		}
@@ -512,7 +508,7 @@ class AssetCompressHelper extends AppHelper {
 		if(strpos($target, ':h') === 0){
 			$target=md5(implode('_',(array)$files));	
 		}
-		
+
 		$target = $this->_addExt($target, '.js');
 		$this->_runtime['js'][$target] = true;
 		$config = $this->config();
@@ -533,7 +529,7 @@ class AssetCompressHelper extends AppHelper {
 		if(strpos($target, ':h') === 0){
 			$target=md5(implode('_',(array)$files));	
 		}
-		
+
 		$target = $this->_addExt($target, '.css');
 		$this->_runtime['css'][$target] = true;
 		$config = $this->config();
